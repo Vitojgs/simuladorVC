@@ -111,31 +111,36 @@ elif menu == "2. Operacoes Morfologicas":
             colB.image(resultado, caption=f"Resultado: {op_tipo} (k={k_size}, it={iters})", use_container_width=True)
 
 # --- MENU: ANÁLISE DE BLOBS ---
-elif menu == "3. Analise de Blobs":
-        # ... (código existente de máscara e contornos) ...
-        
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if area < area_min: continue
+# 3. Analise de Blobs
+    elif menu == "3. Analise de Blobs":
+        if is_video:
+            st.warning("Esta funcionalidade requer o upload de uma imagem.")
+        elif 'hsv_img' in locals() and hsv_img is not None:
+            st.title("Extracao de Blobs e Categorias")
+            
+            # Garante que a mascara e os contornos sao criados
+            mask = cv2.inRange(hsv_img, np.array([8, 100, 75]), np.array([35, 255, 255]))
+            kernel = np.ones((5, 5), np.uint8)
+            mask_clean = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+            
+            # Aqui garantimos que contours existe
+            contours, _ = cv2.findContours(mask_clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            img_resultado = img_rgb.copy()
+            laranjas_count = 0
 
-            # Centroide
-            M = cv2.moments(cnt)
-            if M["m00"] != 0:
-                cx = int(M["m10"] / M["m00"])
-                cy = int(M["m01"] / M["m00"])
-            
-            # Retângulo Orientado (Mais preciso)
-            rect = cv2.minAreaRect(cnt)
-            box = cv2.boxPoints(rect)
-            box = np.intp(box)
-            
-            # Desenhar
-            cv2.drawContours(img_resultado, [box], 0, (0, 255, 0), 2)
-            cv2.circle(img_resultado, (cx, cy), 5, (255, 0, 0), -1)
-            
-            # Mostrar Centroide
-            cv2.putText(img_resultado, f"({cx},{cy})", (cx+10, cy), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+            # Agora o 'contours' existe sempre
+            for cnt in contours:
+                area = cv2.contourArea(cnt)
+                if area > 1500: # Filtro de area
+                    laranjas_count += 1
+                    x, y, w, h = cv2.boundingRect(cnt)
+                    cv2.rectangle(img_resultado, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+            st.write(f"Laranjas detectadas: {laranjas_count}")
+            st.image(img_resultado, caption="Analise de Blobs", use_container_width=True)
+        else:
+            st.info("Por favor, carregue uma imagem para realizar a analise.")
 
 # --- MENU: FILTRO DE RELEVÂNCIA ---
 elif menu == "4. Filtro de Relevancia (Video)":
