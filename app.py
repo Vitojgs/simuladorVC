@@ -28,7 +28,7 @@ st.sidebar.markdown("---")
 st.sidebar.header("Upload de Ficheiro")
 uploaded_file = st.sidebar.file_uploader(
     "Carregue uma imagem ou video (.avi)",
-    type=['jpg', 'png', 'jpeg', 'avi']
+    type=['jpg', 'png', 'jpeg', 'ppm', 'avi']
 )
 
 # Guia de Utilizacao
@@ -58,8 +58,7 @@ with st.sidebar.expander("📚 Guia de Utilização"):
     * Permite extrair automaticamente apenas os frames relevantes do vídeo.
     """)
 
-PIXEL_TO_MM = 55.0 / 280.0
-
+PIXEL_TO_MM = 55.0 / 280.0 
 
 def carregar_imagem(file):
     image = Image.open(file)
@@ -173,4 +172,5 @@ else:
 
         else:
             st.warning("Por favor, carregue um ficheiro .avi para esta análise.")
+
 
