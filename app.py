@@ -61,14 +61,19 @@ with st.sidebar.expander("📚 Guia de Utilização"):
 PIXEL_TO_MM = 55.0 / 280.0 
 
 def carregar_imagem(file):
+    # Abre a imagem com o Pillow
     image = Image.open(file)
+    
+    # Converte para RGB (garante que remove canal Alpha ou paletas)
+    image = image.convert('RGB')
+    
+    # Converte para array Numpy
     img_array = np.array(image)
-
-    if len(img_array.shape) == 3 and img_array.shape[2] == 3:
-        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
-        return img_array, img_bgr
-
-    return None, None
+    
+    # Converte de RGB (do Pillow) para BGR (do OpenCV)
+    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+    
+    return img_array, img_bgr
 
 
 if uploaded_file is None:
