@@ -34,24 +34,27 @@ with st.sidebar.expander("📚 Guia de Utilização"):
     st.markdown("""
     **Como utilizar esta ferramenta:**
     
-    **1. Upload de Ficheiro**
-    * Carregue uma imagem estática para calibrar os algoritmos de cor e forma.
-    * Carregue um vídeo (`.avi`) para testar o Filtro de Relevância.
+    **1. Upload de Ficheiro e Extração de Frames**
+    * Para calibrar os algoritmos, necessita de **carregar uma imagem estática**.
+    * Se apenas tiver o vídeo (`.avi`), carregue-o e vá ao separador **4. Filtro de Relevância (Vídeo)**.
+    * Clique em **"Iniciar Processamento"** e escolha um dos *frames* gerados.
+    * Clique com o botão direito do rato sobre a imagem, selecione **"Guardar imagem como..."** e guarde-a no seu equipamento.
+    * Remova o vídeo da barra lateral, faça o upload dessa nova imagem e inicie o seu estudo.
     
     **2. Segmentação HSV**
-    * Use os *sliders* para encontrar os valores exatos que isolam a cor laranja. 
-    * O objetivo é que a "Máscara Binária" mostre as laranjas a branco e o resto a preto.
-    * *Dica:* Copie o código gerado no fundo para o seu ficheiro C++.
+    * Utilize os *sliders* para encontrar os valores exatos que isolam a cor laranja. 
+    * O objetivo é que a "Máscara Binária" apresente as laranjas a branco e o fundo a preto.
+    * *Dica:* Copie a sugestão de código gerada no fundo da página para o seu ficheiro C++.
     
     **3. Operações Morfológicas**
-    * Limpe o ruído (pontos brancos falsos) ou tape os buracos dentro das laranjas usando Erosão, Dilação, Abertura ou Fecho.
+    * Limpe o ruído (pontos brancos falsos) ou tape os buracos dentro das laranjas utilizando as ferramentas de Erosão, Dilação, Abertura ou Fecho.
     
     **4. Análise de Blobs**
-    * Ajuste o Filtro de Área para ignorar laranjas demasiado distantes ou ruído.
-    * Ajuste a Tolerância de Circularidade para definir o rigor entre as Categorias (Extra, I e II).
+    * Ajuste o Filtro de Área mínima para ignorar poeiras ou falsos positivos.
+    * Ajuste a Tolerância de Circularidade para afinar a precisão matemática entre as Categorias (Extra, I e II).
     
-    **5. Filtro de Relevância**
-    * Exclusivo para vídeo. Permite saltar frames vazias no tapete rolante e extrair apenas os momentos com fruta visível para análise.
+    **5. Filtro de Relevância (Vídeo)**
+    * Exclusivo para vídeo. Permite ignorar *frames* vazios no tapete rolante e extrair apenas os momentos com fruta visível para análise estática.
     """)
 # --------------------------------------
 
