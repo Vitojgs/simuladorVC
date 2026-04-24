@@ -78,28 +78,64 @@ if menu == "1. Segmentacao HSV":
 
 # --- MENU: OPERAÇÕES MORFOLÓGICAS ---
 elif menu == "2. Operacoes Morfologicas":
-    if hsv_img is not None:
-        st.title("Operacoes Morfologicas")
-        mask_base = cv2.inRange(hsv_img, np.array([5, 140, 80]), np.array([22, 255, 255]))
-        op = st.selectbox("Operação", ["Fecho", "Abertura", "Dilatação", "Erosão"])
-        kernel = np.ones((5, 5), np.uint8)
-        if op == "Fecho": res = cv2.morphologyEx(mask_base, cv2.MORPH_CLOSE, kernel)
-        elif op == "Abertura": res = cv2.morphologyEx(mask_base, cv2.MORPH_OPEN, kernel)
-        else: res = cv2.dilate(mask_base, kernel) if op == "Dilatação" else cv2.erode(mask_base, kernel)
-        st.image(res, caption=op, use_container_width=True)
+        if is_video:
+            st.warning("Esta funcionalidade requer o upload de uma imagem.")
+        elif hsv_img is not None:
+            st.title("Simulador de Operacoes Morfologicas")
+            
+            # Máscara base (ajusta aqui os teus valores ótimos)
+            mask_base = cv2.inRange(hsv_img, np.array([8, 140, 80]), np.array([25, 255, 255]))
+
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                k_size = st.slider("Tamanho do Kernel (Ímpar)", 3, 21, 5, step=2)
+            with col2:
+                iters = st.slider("Número de Iterações", 1, 5, 1)
+            with col3:
+                op_tipo = st.selectbox("Operação", ["Fecho (Close)", "Abertura (Open)", "Dilatação", "Erosão"])
+
+            kernel = np.ones((k_size, k_size), np.uint8)
+
+            # Execução com iterações variáveis
+            if op_tipo == "Dilatação":
+                resultado = cv2.dilate(mask_base, kernel, iterations=iters)
+            elif op_tipo == "Erosão":
+                resultado = cv2.erode(mask_base, kernel, iterations=iters)
+            elif op_tipo == "Fecho (Close)":
+                resultado = cv2.morphologyEx(mask_base, cv2.MORPH_CLOSE, kernel, iterations=iters)
+            else:
+                resultado = cv2.morphologyEx(mask_base, cv2.MORPH_OPEN, kernel, iterations=iters)
+
+            colA, colB = st.columns(2)
+            colA.image(mask_base, caption="Máscara Original", use_container_width=True)
+            colB.image(resultado, caption=f"Resultado: {op_tipo} (k={k_size}, it={iters})", use_container_width=True)
 
 # --- MENU: ANÁLISE DE BLOBS ---
 elif menu == "3. Analise de Blobs":
-    if hsv_img is not None:
-        st.title("Analise de Blobs")
-        mask = cv2.inRange(hsv_img, np.array([5, 140, 80]), np.array([22, 255, 255]))
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        res = img_rgb.copy()
+        # ... (código existente de máscara e contornos) ...
+        
         for cnt in contours:
-            if cv2.contourArea(cnt) > 500:
-                x,y,w,h = cv2.boundingRect(cnt)
-                cv2.rectangle(res, (x,y), (x+w, y+h), (0,255,0), 2)
-        st.image(res, use_container_width=True)
+            area = cv2.contourArea(cnt)
+            if area < area_min: continue
+
+            # Centroide
+            M = cv2.moments(cnt)
+            if M["m00"] != 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+            
+            # Retângulo Orientado (Mais preciso)
+            rect = cv2.minAreaRect(cnt)
+            box = cv2.boxPoints(rect)
+            box = np.intp(box)
+            
+            # Desenhar
+            cv2.drawContours(img_resultado, [box], 0, (0, 255, 0), 2)
+            cv2.circle(img_resultado, (cx, cy), 5, (255, 0, 0), -1)
+            
+            # Mostrar Centroide
+            cv2.putText(img_resultado, f"({cx},{cy})", (cx+10, cy), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
 
 # --- MENU: FILTRO DE RELEVÂNCIA ---
 elif menu == "4. Filtro de Relevancia (Video)":
