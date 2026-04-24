@@ -28,6 +28,33 @@ uploaded_file = st.sidebar.file_uploader(
     type=['jpg', 'png', 'jpeg', 'avi']
 )
 
+# --- NOVO BLOCO: GUIA DE UTILIZAÇÃO ---
+st.sidebar.markdown("---")
+with st.sidebar.expander("📚 Guia de Utilização"):
+    st.markdown("""
+    **Como utilizar esta ferramenta:**
+    
+    **1. Upload de Ficheiro**
+    * Carregue uma imagem estática para calibrar os algoritmos de cor e forma.
+    * Carregue um vídeo (`.avi`) para testar o Filtro de Relevância.
+    
+    **2. Segmentação HSV**
+    * Use os *sliders* para encontrar os valores exatos que isolam a cor laranja. 
+    * O objetivo é que a "Máscara Binária" mostre as laranjas a branco e o resto a preto.
+    * *Dica:* Copie o código gerado no fundo para o seu ficheiro C++.
+    
+    **3. Operações Morfológicas**
+    * Limpe o ruído (pontos brancos falsos) ou tape os buracos dentro das laranjas usando Erosão, Dilação, Abertura ou Fecho.
+    
+    **4. Análise de Blobs**
+    * Ajuste o Filtro de Área para ignorar laranjas demasiado distantes ou ruído.
+    * Ajuste a Tolerância de Circularidade para definir o rigor entre as Categorias (Extra, I e II).
+    
+    **5. Filtro de Relevância**
+    * Exclusivo para vídeo. Permite saltar frames vazias no tapete rolante e extrair apenas os momentos com fruta visível para análise.
+    """)
+# --------------------------------------
+
 # Constantes do Projeto
 PIXEL_TO_MM = 55.0 / 280.0
 
