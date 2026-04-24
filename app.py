@@ -221,19 +221,24 @@ else:
                         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                         mask = cv2.inRange(hsv, np.array([8, 100, 75]), np.array([35, 255, 255]))
                         density = (cv2.countNonZero(mask) / mask.size) * 100
-                        
+
                         if density >= threshold:
+                            nome_ficheiro = f"frame_{frame_idx}.ppm"
+                            cv2.imwrite(nome_ficheiro, frame)
+
                             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                            selected_frames.append((frame_idx, density, frame_rgb))
-                    
+                            selected_frames.append((frame_idx, density, frame_rgb, nome_ficheiro))
+                        
+                                            
                     frame_idx += 1
                     if total_f > 0: bar.progress(min(frame_idx/total_f, 1.0))
                 
                 cap.release()
                 st.success(f"Analise terminada. Encontrados {len(selected_frames)} momentos de interesse.")
 
-                for idx, dens, img in selected_frames:
-                    with st.expander(f"Frame {idx} - Densidade: {dens:.2f}%"):
+                for idx, dens, img, ficheiro in selected_frames:
+                    with st.expander(
+                        f"Frame {idx} - Densidade: {dens:.2f}% - Guardado: {ficheiro}"):
                         st.image(img, use_container_width=True)
             
             # Limpeza do ficheiro temporario
