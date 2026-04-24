@@ -27,7 +27,7 @@ menu = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.header("Upload de Ficheiro")
 uploaded_file = st.sidebar.file_uploader(
-    "Carregue uma imagem ou video (.avi)",
+    "Carregue uma imagem ou video (.avi, .ppm)",
     type=['jpg', 'png', 'jpeg', 'ppm', 'avi']
 )
 
@@ -35,10 +35,10 @@ uploaded_file = st.sidebar.file_uploader(
 with st.sidebar.expander("📚 Guia de Utilização"):
     st.markdown("""
     1. **Upload:** Carregue imagem para calibrar ou vídeo para extrair frames.
-    2. **Segmentação:** Ajuste os limites HSV.
-    3. **Morfologia:** Limpeza de ruído.
-    4. **Blobs:** Análise de área e circularidade.
-    5. **Vídeo:** Extração automática de frames relevantes.
+    2. **Segmentação:** Ajuste limites HSV para isolar as laranjas.
+    3. **Morfologia:** Limpeza de ruído e preenchimento de falhas.
+    4. **Blobs:** Análise de área e circularidade para classificação.
+    5. **Vídeo:** Extração automática de frames relevantes para estudo estático.
     """)
 
 # Funcao robusta de carregamento
@@ -74,73 +74,40 @@ if menu == "1. Segmentacao HSV":
         mask = cv2.inRange(hsv_img, np.array([h_min, s_min, v_min]), np.array([h_max, 255, 255]))
         colA, colB = st.columns(2)
         colA.image(img_rgb, caption="Original", use_container_width=True)
-        colB.image(mask, caption="Máscara", use_container_width=True)
+        colB.image(mask, caption="Máscara Binária", use_container_width=True)
+        st.code(f"if (h >= {(h_min/179.0)*360.0:.1f} && h <= {(h_max/179.0)*360.0:.1f} && s >= {s_min/255.0:.2f} && v >= {v_min/255.0:.2f})", language="cpp")
 
 # --- MENU: OPERAÇÕES MORFOLÓGICAS ---
 elif menu == "2. Operacoes Morfologicas":
-        if is_video:
-            st.warning("Esta funcionalidade requer o upload de uma imagem.")
-        elif hsv_img is not None:
-            st.title("Simulador de Operacoes Morfologicas")
-            
-            # Máscara base (ajusta aqui os teus valores ótimos)
-            mask_base = cv2.inRange(hsv_img, np.array([8, 140, 80]), np.array([25, 255, 255]))
-
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                k_size = st.slider("Tamanho do Kernel (Ímpar)", 3, 21, 5, step=2)
-            with col2:
-                iters = st.slider("Número de Iterações", 1, 5, 1)
-            with col3:
-                op_tipo = st.selectbox("Operação", ["Fecho (Close)", "Abertura (Open)", "Dilatação", "Erosão"])
-
-            kernel = np.ones((k_size, k_size), np.uint8)
-
-            # Execução com iterações variáveis
-            if op_tipo == "Dilatação":
-                resultado = cv2.dilate(mask_base, kernel, iterations=iters)
-            elif op_tipo == "Erosão":
-                resultado = cv2.erode(mask_base, kernel, iterations=iters)
-            elif op_tipo == "Fecho (Close)":
-                resultado = cv2.morphologyEx(mask_base, cv2.MORPH_CLOSE, kernel, iterations=iters)
-            else:
-                resultado = cv2.morphologyEx(mask_base, cv2.MORPH_OPEN, kernel, iterations=iters)
-
-            colA, colB = st.columns(2)
-            colA.image(mask_base, caption="Máscara Original", use_container_width=True)
-            colB.image(resultado, caption=f"Resultado: {op_tipo} (k={k_size}, it={iters})", use_container_width=True)
+    if hsv_img is not None:
+        st.title("Operacoes Morfologicas")
+        mask_base = cv2.inRange(hsv_img, np.array([5, 140, 80]), np.array([22, 255, 255]))
+        k_size = st.slider("Tamanho do Kernel", 3, 21, 5, step=2)
+        op = st.selectbox("Operação", ["Fecho", "Abertura", "Dilatação", "Erosão"])
+        kernel = np.ones((k_size, k_size), np.uint8)
+        
+        if op == "Fecho": res = cv2.morphologyEx(mask_base, cv2.MORPH_CLOSE, kernel)
+        elif op == "Abertura": res = cv2.morphologyEx(mask_base, cv2.MORPH_OPEN, kernel)
+        else: res = cv2.dilate(mask_base, kernel) if op == "Dilatação" else cv2.erode(mask_base, kernel)
+        
+        st.image(res, caption=op, use_container_width=True)
 
 # --- MENU: ANÁLISE DE BLOBS ---
-# 3. Analise de Blobs
-    elif menu == "3. Analise de Blobs":
-        if is_video:
-            st.warning("Esta funcionalidade requer o upload de uma imagem.")
-        elif 'hsv_img' in locals() and hsv_img is not None:
-            st.title("Extracao de Blobs e Categorias")
-            
-            # Garante que a mascara e os contornos sao criados
-            mask = cv2.inRange(hsv_img, np.array([8, 100, 75]), np.array([35, 255, 255]))
-            kernel = np.ones((5, 5), np.uint8)
-            mask_clean = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-            
-            # Aqui garantimos que contours existe
-            contours, _ = cv2.findContours(mask_clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            img_resultado = img_rgb.copy()
-            laranjas_count = 0
-
-            # Agora o 'contours' existe sempre
-            for cnt in contours:
-                area = cv2.contourArea(cnt)
-                if area > 1500: # Filtro de area
-                    laranjas_count += 1
-                    x, y, w, h = cv2.boundingRect(cnt)
-                    cv2.rectangle(img_resultado, (x, y), (x+w, y+h), (0, 255, 0), 2)
-
-            st.write(f"Laranjas detectadas: {laranjas_count}")
-            st.image(img_resultado, caption="Analise de Blobs", use_container_width=True)
-        else:
-            st.info("Por favor, carregue uma imagem para realizar a analise.")
+elif menu == "3. Analise de Blobs":
+    if hsv_img is not None:
+        st.title("Analise de Blobs")
+        mask = cv2.inRange(hsv_img, np.array([5, 140, 80]), np.array([22, 255, 255]))
+        mask_clean = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((5,5), np.uint8))
+        contours, _ = cv2.findContours(mask_clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        res = img_rgb.copy()
+        count = 0
+        for cnt in contours:
+            if cv2.contourArea(cnt) > 500:
+                count += 1
+                x,y,w,h = cv2.boundingRect(cnt)
+                cv2.rectangle(res, (x,y), (x+w, y+h), (0,255,0), 2)
+        st.write(f"Detectadas: {count}")
+        st.image(res, caption="Blobs Identificados", use_container_width=True)
 
 # --- MENU: FILTRO DE RELEVÂNCIA ---
 elif menu == "4. Filtro de Relevancia (Video)":
@@ -149,7 +116,7 @@ elif menu == "4. Filtro de Relevancia (Video)":
         tfile = tempfile.NamedTemporaryFile(delete=False)
         tfile.write(uploaded_file.read())
         cap = cv2.VideoCapture(tfile.name)
-        if st.button("Iniciar Processamento"):
+        if st.button("Processar"):
             frame_idx = 0
             while cap.isOpened():
                 ret, frame = cap.read()
@@ -162,4 +129,4 @@ elif menu == "4. Filtro de Relevancia (Video)":
                 frame_idx += 1
         tfile.close()
     else:
-        st.warning("Carregue um vídeo .avi")
+        st.warning("Carregue um vídeo .avi para esta funcionalidade.")
